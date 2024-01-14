@@ -12,4 +12,4 @@ Solvers:
 * Parabolic solver
 * Gradient descent method
 
-Numeric integration, eigen values and vectors
+Numeric integration, eigen values and vectors, linear algebra
