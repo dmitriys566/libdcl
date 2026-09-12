@@ -1,89 +1,30 @@
 #include "libamos.h"
 
-     double alim;
-     int BesselType;
-    /** DOCUMENT ME! */
-     double_vector_t cyi;
-
-    /** DOCUMENT ME! */
-     double_vector_t cyr;
-
-    /** order of derivative, 0 or 1. */
-     int derivativeOrder;
-
-    /** DOCUMENT ME! */
-     bool doTest = false;
-
-    /** I1MACH(14) = 53. */
-     int doubleDigits = 53;
-
-    /** DOCUMENT ME! */
-     double elim;
-
-    /** I1MACH(16) = 1024 The largest exponent for double precision. */
-     int emax = 1024;
-
-    /** I1MACH(15) = -1021; The smallest exponent for double precision. */
-     int emin = -1021;
-
-    /** D1MACH(4). */
-     double epsilon;
-
-    /**
-     * errorFlag = 0, normal return - computation completed errorFlag = 1, input error - no computation errorFlag = 2,
-     * overflow - no computation, Real(z) large on UNSCALED_FUNCTION errorFlag = 3, ABS(Z) or initialOrder +
-     * sequenceNumber - 1 large, computation but losses of significance by arguemnt reduction produce less than half of
-     * machine accuracy errorFlag = 4, ABS(Z) or initialOrder + sequenceNumber - 1 too large, No computation because of
-     * complete losses of significance by argument reduction errorFlag = 5, Error, no computation, argument termination
-     * condition not met Length of array passed in must be 1.
-     */
-     int_vector_t errorFlag;
-
-    /** DOCUMENT ME! */
-     double fnul;
-
-    /**
-     * real and imaginary outputs Length of arrays passed in must be sequenceNumber Kind of Kankel function = 1 or 2.
-     */
-     int HankelKind;
-
-    /** order of initial function. */
-     double initialOrder;
-
-    /**
-     * Number of components set to zero due to underflow nz[0] = 0, normal return nz[0] > 0, Last nz components of cy
-     * set to zero due to underflow, cy[j] = 0.0 + i*0.0 for j = sequenceNumber - nz, ..., sequenceNumber-1 Length of
-     * array passed in must be 1.
-     */
-     int_vector_t nz;
-
-    /** DOCUMENT ME! */
-     bool overflowTest = false;
-
-    /** D1MACH(5) = log10(2). */
-     double r1m5 = 0.434294481903251 * log(2.0);
-
-    /** DOCUMENT ME! */
-     double rl;
-
-    /**
-     * UNSCALED_FUNCTION returns cy[j-1] = besselFunction(initialOrder+j-1,z), j = 1,...,sequenceNumber SCALED_FUNCTION
-     * returns cy[j-1] = besselFunction(initialOrder+j-1,z)*exp(-abs(Real(z))), j = 1,...,sequenceNumber.
-     */
-     int scalingOption;
-
-    /** number of members of the sequence. */
-     int sequenceNumber;
-
-    /** 2**-1022 = D1MACH(1). */
-     double tiny = pow(2, -1022);
-
-    /** DOCUMENT ME! */
-     double tol;
-     /** DOCUMENT ME! */
-     double zi;
-     /** zr and zi are the real and imaginary parts of the complex argument. */
-     double zr;
+thread_local double alim;
+thread_local int BesselType;
+thread_local double_vector_t cyi;
+thread_local double_vector_t cyr;
+thread_local int derivativeOrder;
+thread_local bool doTest = false;
+thread_local int doubleDigits = 53;
+thread_local double elim;
+thread_local int emax = 1024;
+thread_local int emin = -1021;
+thread_local double epsilon;
+thread_local int_vector_t errorFlag;
+thread_local double fnul;
+thread_local int HankelKind;
+thread_local double initialOrder;
+thread_local int_vector_t nz;
+thread_local bool overflowTest = false;
+thread_local double r1m5 = 0.434294481903251 * log(2.0);
+thread_local double rl;
+thread_local int scalingOption;
+thread_local int sequenceNumber;
+thread_local double tiny = pow(2, -1022);
+thread_local double tol;
+thread_local double zi;
+thread_local double zr;
 
 double zabs(double zr, double zi) {
         double u, v, q, s;

@@ -4,6 +4,8 @@
 #include <math.h>
 #include <pthread.h>
 #include <vector>
+#include <stdexcept>
+#include <cmath>
 #include <ios>
 #include <string>
 #include <array>
@@ -22,6 +24,104 @@
 #include "cubature.h"
 #include <omp.h>
 #include "itertools/itertools.hpp"
+
+
+class CubicSpline {
+public:
+    // Конструктор: принимает узлы (x, y). x должны быть строго возрастающими.
+    CubicSpline(const std::vector<double>& x, const std::vector<double>& y)
+        : x_(x), y_(y)
+    {
+        if (x_.size() != y_.size())
+            throw std::invalid_argument("x and y must have the same size");
+        if (x_.size() < 2)
+            throw std::invalid_argument("Need at least two points to build a spline");
+        // Проверка, что x строго возрастают
+        for (size_t i = 1; i < x_.size(); ++i) {
+            if (x_[i] <= x_[i-1])
+                throw std::invalid_argument("x values must be strictly increasing");
+        }
+        build();
+    }
+
+    // Интерполяция в точке t (должна лежать внутри [x[0], x.back()])
+    double operator()(double t) const {
+        // Если t выходит за границы – можно обработать по-разному.
+        // В данном случае бросаем исключение.
+        if (t < x_.front() || t > x_.back())
+            throw std::out_of_range("t is out of the interpolation range");
+        // Находим интервал, содержащий t
+        size_t idx = findInterval(t);
+        // Разности
+        double h = x_[idx+1] - x_[idx];
+        double xi = (x_[idx+1] - t) / h;
+        double eta = (t - x_[idx]) / h;
+        // Значение сплайна:
+        // f(t) = y_i * xi + y_{i+1} * eta + h^2/6 * ( (xi^3 - xi) * s_i + (eta^3 - eta) * s_{i+1} )
+        double term1 = y_[idx] * xi + y_[idx+1] * eta;
+        double term2 = ((xi*xi*xi - xi) * s_[idx] + (eta*eta*eta - eta) * s_[idx+1]) * (h*h) / 6.0;
+        return term1 + term2;
+    }
+
+private:
+    std::vector<double> x_, y_;
+    std::vector<double> s_; // вторые производные в узлах
+
+    // Построение коэффициентов (вторых производных) для естественного сплайна
+    void build() {
+        size_t n = x_.size();
+        s_.assign(n, 0.0);
+
+        // Трехдиагональная система: A * s = d
+        std::vector<double> a(n-1, 0.0), b(n, 0.0), c(n-1, 0.0), d(n, 0.0);
+
+        // Заполнение матрицы и правой части
+        for (size_t i = 1; i < n-1; ++i) {
+            double hi = x_[i] - x_[i-1];
+            double hi1 = x_[i+1] - x_[i];
+            b[i] = 2.0 * (hi + hi1);
+            a[i-1] = hi;
+            c[i] = hi1;
+            d[i] = 6.0 * ((y_[i+1] - y_[i]) / hi1 - (y_[i] - y_[i-1]) / hi);
+        }
+
+        // Граничные условия: естественный сплайн -> s[0] = 0, s[n-1] = 0
+        // Первое и последнее уравнения системы упрощаются
+        b[0] = 1.0;
+        c[0] = 0.0;
+        d[0] = 0.0;
+        b[n-1] = 1.0;
+        a[n-2] = 0.0;
+        d[n-1] = 0.0;
+
+        // Решение методом прогонки (Thomas algorithm)
+        std::vector<double> cp(n-1, 0.0); // вспомогательный массив для прогонки
+        for (size_t i = 1; i < n; ++i) {
+            double w = a[i-1] / b[i-1];
+            b[i] -= w * c[i-1];
+            d[i] -= w * d[i-1];
+            cp[i-1] = w;
+        }
+        s_[n-1] = d[n-1] / b[n-1];
+        for (size_t i = n-1; i-- > 0; ) {
+            s_[i] = (d[i] - c[i] * s_[i+1]) / b[i];
+        }
+    }
+
+    // Поиск индекса левой границы интервала, содержащего t (бинарный поиск)
+    size_t findInterval(double t) const {
+        size_t left = 0;
+        size_t right = x_.size() - 1;
+        while (right - left > 1) {
+            size_t mid = (left + right) / 2;
+            if (t < x_[mid])
+                right = mid;
+            else
+                left = mid;
+        }
+        return left;
+    }
+};
 
 #ifdef LONG_DOUBLE
 typedef long double double_t;

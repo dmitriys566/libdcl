@@ -2534,7 +2534,8 @@ double_complex_t besselj(double nu, double_complex_t z){
     }
     zbesj(zr,zi,nu,kode,n,cyr,cyi,nz,ierr);
     if(ierr[0]!=0){
-        printf("error!\n");
+        fprintf(stderr,"[besselj] ierr=%d nz=%d nu=%.15g z=(%.15g,%.15g)\n",
+                ierr[0], nz[0], nu, creal(z), cimag(z));
     }
     res=cyr[0]+I*cyi[0];
     return res;
@@ -2555,7 +2556,8 @@ double_complex_t bessely(double nu, double_complex_t z){
     }
     zbesy(zr,zi,nu,kode,n,cyr,cyi,nz,wrkr,wrki,ierr);
     if(ierr[0]!=0){
-        printf("error!\n");
+        fprintf(stderr,"[bessely] ierr=%d nz=%d nu=%.15g z=(%.15g,%.15g)\n",
+                ierr[0], nz[0], nu, creal(z), cimag(z));
     }
     res=cyr[0]+I*cyi[0];
     return res;
@@ -2575,7 +2577,8 @@ double_complex_t besseli(double nu, double_complex_t z){
     }
     zbesi(zr,zi,nu,kode,n,cyr,cyi,nz,ierr);
     if(ierr[0]!=0){
-        printf("error!\n");
+        fprintf(stderr,"[besseli] ierr=%d nz=%d nu=%.15g z=(%.15g,%.15g)\n",
+                ierr[0], nz[0], nu, creal(z), cimag(z));
     }
     res=cyr[0]+I*cyi[0];
     return res;
@@ -2595,7 +2598,8 @@ double_complex_t besselk(double nu, double_complex_t z){
     }
     zbesk(zr,zi,nu,kode,n,cyr,cyi,nz,ierr);
     if(ierr[0]!=0){
-        printf("error!\n");
+        fprintf(stderr,"[besselk] ierr=%d nz=%d nu=%.15g z=(%.15g,%.15g)\n",
+                ierr[0], nz[0], nu, creal(z), cimag(z));
     }
     res=cyr[0]+I*cyi[0];
     return res;
