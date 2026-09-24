@@ -872,6 +872,10 @@ double GaussIntegrateParallel(std::function<double(double [],void *)> f, void *s
     free(tparams);
     free(tids);
     free(x);
+    for(i=0;i<nproc;i++)
+    {
+        free(retval[i]);
+    }
     free(retval);
     return rv;
 }
@@ -978,6 +982,10 @@ long double GaussIntegrateParallelLong(std::function<long double(long double [],
     free(tparams);
     free(tids);
     free(x);
+    for(i=0;i<nproc;i++)
+    {
+        free(retval[i]);
+    }
     free(retval);
     return rv;
 }
@@ -1100,11 +1108,19 @@ double_complex_t ZGaussIntegrateParallel(std::function<double_complex_t(double [
     free(b1);
     free(idx);
     free(idx_current);
+    for (counter = 0; counter < size; counter++) {
+        free(x_glob[counter]);
+    }
     free(x_glob);
     free(c_glob);
     free(tparams);
     free(tids);
     free(x);
+    for(i=0;i<nproc;i++)
+    {
+        free(retval[i]);
+    }
+    free(retval);
     return rv;
 }
 
@@ -3100,6 +3116,8 @@ int EigenSystemSym(int n,std::vector<std::vector<double>> a,std::vector<double_c
         }
     }
     delete[]m;
+    delete[]ww;
+    delete[]work;
 }
 
 int EigenSystemHerm(int n,std::vector<std::vector<double_complex_t>> a,std::vector<double_complex_t> &w,std::vector<std::vector<double_complex_t>> &zc,int eigenvectors,int nproc){
@@ -3974,6 +3992,7 @@ double det(int N, double *a)
             rv=-rv;
         }
     }
+    delete[]ipiv;
     return rv;
 }
 
