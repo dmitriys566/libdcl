@@ -7,6 +7,8 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(FFTW3 REQUIRED IMPORTED_TARGET fftw3)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -55,4 +57,4 @@ target_include_directories(dcl
 )
 add_executable(test test.cpp)
 
-target_link_libraries(test dcl Threads::Threads Eigen3::Eigen quadmath)
+target_link_libraries(test dcl Threads::Threads Eigen3::Eigen quadmath PkgConfig::FFTW3)

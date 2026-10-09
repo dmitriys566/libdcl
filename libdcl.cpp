@@ -3619,6 +3619,7 @@ bool find_minimum_descent(std::function<double (std::vector<double> &, void *)> 
 
     while (iter < max_iter && !converged) {
         iter++;
+        printf("iter %d\n",iter);
 
         // ---------- 1. Вычисление градиента (центральные разности) ----------
         for (size_t i = 0; i < n; ++i) {
