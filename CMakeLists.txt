@@ -45,10 +45,10 @@ add_subdirectory(cubature)
 
 add_library(dcl libamos.h libamos.cpp libeispack.cpp libeispack.h libdcl.cpp libdcl.h)
 if (MKL_FOUND)
-    target_link_libraries(dcl Threads::Threads Eigen3::Eigen gfortran m ${MKL_LIBRARIES} cubature)
+    target_link_libraries(dcl Threads::Threads Eigen3::Eigen gfortran m ${MKL_LIBRARIES} cubature PkgConfig::FFTW3)
 else()
     add_subdirectory(openblas)
-    target_link_libraries(dcl Threads::Threads Eigen3::Eigen gfortran m openblas lapack quadmath cubature)
+    target_link_libraries(dcl Threads::Threads Eigen3::Eigen gfortran m openblas lapack quadmath cubature PkgConfig::FFTW3)
 endif()
 target_include_directories(dcl
     PUBLIC

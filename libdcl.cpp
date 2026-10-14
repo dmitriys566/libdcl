@@ -4239,20 +4239,74 @@ double Hypergeometric2F1(double a,double b,double c,double z)
     rv = (Gamma(c)/(Gamma(b)*Gamma(c-b)))*GaussIntegrateParallel(to_2f1,(void *)&p,1,left,right,20,get_num_threads());
     return rv;
 }
-//TRASH FROM APPELLF4
-/*
-    double sum = 0;
-    double eps = 1e-16;
-    double term=1;
-    int m,n,maxiter;
-    maxiter = 10;
-    for(m=0;m<maxiter;m++)
+
+void fourier_transform_1d(std::vector<double>&in,std::vector<double_complex_t> &out)
+{
+    size_t N = in.size();
+    std::vector<fftw_complex> res(N);
+    out.resize(N);
+    fftw_plan plan = fftw_plan_dft_r2c_1d(in.size(), in.data(), res.data(), FFTW_ESTIMATE);
+    fftw_execute(plan);
+    for(int i=0;i<res.size();i++)
     {
-        for(n=0;n<maxiter;n++)
-        {
-            term = ipow(x,m)*ipow(y,n)*Pochgammer(m+n,a)*Pochgammer(m+n,b)/(Pochgammer(m,c1)*Pochgammer(n,c2)*ifact(m)*ifact(n));
-            sum+=term;
-        }
+        out[i] = res[i][0]+I*res[i][1];
     }
-    return sum;
-*/
+}
+
+/**
+ * @brief idx2offset
+ * Retranslate indexes to offset as in C style;
+ * @param ns
+ * @param idx
+ * @return
+ */
+size_t idx2offset(std::vector<int> &ns,std::vector<int> &idx)
+{
+    if (ns.size() != idx.size())
+        throw std::invalid_argument("ns.size() != idx.size()");
+
+    size_t offset = 0;
+
+    for (size_t i = 0; i < idx.size(); i++)
+    {
+        if (idx[i] >= ns[i])
+            throw std::out_of_range("index out of range");
+
+        offset = offset * ns[i] + idx[i];
+    }
+    return offset;
+}
+
+std::vector<int> offset2idx(std::vector<int>&ns,size_t offset)
+{
+    std::vector<int> idx;
+    idx.resize(ns.size());
+    for (size_t i = ns.size(); i-- > 0; )
+    {
+        if (ns[i] == 0)
+            throw std::invalid_argument("ns[i] == 0");
+
+        idx[i] = offset % ns[i];
+        offset /= ns[i];
+    }
+
+    if (offset != 0)
+        throw std::out_of_range("offset out of range");
+    return idx;
+}
+
+void fourier_transform(std::vector<double>&in,std::vector<double_complex_t>&out, std::vector<int> &ns)
+{
+    //TODO: Вставить проверки размеров.
+    int rank;
+    rank = ns.size();
+    size_t N = in.size();
+    std::vector<fftw_complex> res(N);
+    out.resize(N);
+    fftw_plan plan = fftw_plan_dft_r2c(rank, ns.data(),in.data(), res.data(),FFTW_ESTIMATE);
+    fftw_execute(plan);
+    for(int i=0;i<res.size();i++)
+    {
+        out[i] = res[i][0]+I*res[i][1];
+    }
+}

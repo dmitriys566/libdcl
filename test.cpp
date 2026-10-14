@@ -25,6 +25,8 @@ int main()
 {
     std::vector<double> x_init={-50.0,5.0};
     std::vector<double> x_out={100.0,100.0};
+    std::vector<int> ns,idx;
+    size_t offset;
     double_complex_t mu,lambda,rv;
     double a[2]={0,0};
     double b[2]={2,2};
@@ -37,5 +39,10 @@ int main()
     printf("%.16lg %.16lg\n",x_out[0],x_out[1]);
     printf("I=%.16lg\n",GaussIntegrateCuba(g,NULL,2,a,b));
     printf("Ai(5)=%.16lg\n",AiryBi(5.0,0));
+    ns = {800,600};
+    idx = {1,2};
+    offset = idx2offset(ns,idx);
+    printf("off = %ld\n",offset);
+    printf("%d\n",(int)6.9);
     return 0;
 }
