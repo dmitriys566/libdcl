@@ -69,4 +69,4 @@ Testing/
 .cache/
 
 #QT Creator
-.qtcreator/
+.qtcreator/*
