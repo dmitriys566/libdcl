@@ -1,3 +1,6 @@
 [submodule "openblas"]
 	path = openblas
 	url = https://github.com/OpenMathLib/OpenBLAS.git
+[submodule "cubature"]
+	path = cubature
+	url = https://github.com/stevengj/cubature.git
