@@ -20,6 +20,7 @@
 #include <functional>
 #include <Eigen/Eigen>
 #include <Eigen/Eigenvalues>
+//#include <cblas.h>
 #include "libamos.h"
 #include "libeispack.h"
 #include "cubature.h"
@@ -178,6 +179,16 @@ void zgeev_(
     double* rwork,    // вещественный рабочий массив
     int* info         // код ошибки
     );
+void dgemm_(const char* transa, const char* transb,
+            const int* m, const int* n, const int* k,
+            const double* alpha,
+            const double* a, const int* lda,
+            const double* b, const int* ldb,
+            const double* beta,
+            double* c, const int* ldc);
+void dgesvd_(char const* jobu, char const* jobvt, int const* m, int const* n,
+             double* a, int const* lda, double* s, double* u, int const* ldu,
+             double* vt, int const* ldvt, double* work, int const* lwork, int* info);
 #ifdef __cplusplus
 }
 #endif

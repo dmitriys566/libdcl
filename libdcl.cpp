@@ -1528,7 +1528,7 @@ long double LaguerreLa(int n,long double a,double x){
 
 //Input: a[m,n];b[n,k]
 //Output: r[m,k]
-void MatrixMatrixMultiply(double *r,double *a,double *b,int m,int n,int k){
+/*void MatrixMatrixMultiply(double *r,double *a,double *b,int m,int n,int k){
     int i,j,cnt;
     double sum;
     for(i=0;i<m;i++){
@@ -1541,6 +1541,22 @@ void MatrixMatrixMultiply(double *r,double *a,double *b,int m,int n,int k){
         }
     }
     return;
+}*/
+void MatrixMatrixMultiply(double *r, double *a, double *b, int m, int n, int k)
+{
+    // Fortran BLAS: column-major. Row-major A (m×n) ≡ A^T (n×m) in column-major.
+    // R = A·B  ⇔  R^T = B^T·A^T  (in column-major)
+    const char noT = 'N';
+    const int M = k, N = m, K = n;
+    const int lda_b = k, ldb_a = n, ldc_r = k;
+    const double one = 1.0, zero = 0.0;
+    dgemm_(&noT, &noT,
+           &M, &N, &K,
+           &one,
+           b, &lda_b,   // first operand in column-major: b as k×n
+           a, &ldb_a,   // second operand:            a as n×m
+           &zero,
+           r, &ldc_r);  // result:                    r as k×m
 }
 
 double SQR(double x){
@@ -3759,7 +3775,7 @@ bool find_minimum_descent(std::function<double (std::vector<double> &, void *)> 
  * Пользовательские данные
  * @return
  */
-bool linear_regression_basis(std::function<std::vector<double>(std::vector<double>&,void *)>f_basis,std::vector<double> &y,std::vector<std::vector<double>>&x_n,std::vector<double>&w_out,void *user_data)
+/*bool linear_regression_basis(std::function<std::vector<double>(std::vector<double>&,void *)>f_basis,std::vector<double> &y,std::vector<std::vector<double>>&x_n,std::vector<double>&w_out,void *user_data)
 {
     std::vector<double> F,Ft,FFt,Fp;
     std::vector<double> fn;
@@ -3796,7 +3812,111 @@ bool linear_regression_basis(std::function<std::vector<double>(std::vector<doubl
     printf("all done\n");
     return true;
 }
+*/
+#include <limits>   // если ещё не подключено
 
+bool linear_regression_basis(std::function<std::vector<double>(std::vector<double>&,void *)>f_basis,
+                             std::vector<double> &y,
+                             std::vector<std::vector<double>>&x_n,
+                             std::vector<double>&w_out,
+                             void *user_data)
+{
+    assert(x_n.size() > 0);
+    assert(x_n[0].size() > 0);
+    assert(x_n.size() == y.size());
+
+    std::vector<double> fn = f_basis(x_n[0], user_data);
+    int M = (int)fn.size();          // число базисных функций (столбцы F)
+    int N = (int)x_n.size();         // число точек данных (строки F)
+    int minMN = std::min(M, N);
+
+    // Матрица плана в row-major:
+    //   F[i*M + j] = basis_j(x_n[i]),  i in [0,N), j in [0,M).
+    //
+    // LAPACK читает column-major, поэтому этот же буфер, интерпретированный
+    // как M×N column-major матрица, есть A = F^T.  SVD считаем именно для A.
+    std::vector<double> A((size_t)M * (size_t)N);
+    for (int i = 0; i < N; ++i) {
+        fn = f_basis(x_n[i], user_data);
+        double *row = &A[(size_t)i * (size_t)M];
+        for (int j = 0; j < M; ++j) row[j] = fn[j];
+    }
+
+    // SVD: A = U * diag(S) * V^T,  economy size.
+    //   U  : M × min(M,N)
+    //   S  : length min(M,N), по убыванию
+    //   VT : min(M,N) × N
+    std::vector<double> S((size_t)minMN);
+    std::vector<double> U((size_t)M * (size_t)minMN);
+    std::vector<double> VT((size_t)minMN * (size_t)N);
+
+    char jobu   = 'S';
+    char jobvt  = 'S';
+    int  lda    = M;
+    int  ldu    = M;
+    int  ldvt   = minMN;
+    int  info   = 0;
+    int  lwork  = -1;
+    double wkopt = 0.0;
+
+    dgesvd_(&jobu, &jobvt, &M, &N, A.data(), &lda,
+            S.data(), U.data(), &ldu, VT.data(), &ldvt,
+            &wkopt, &lwork, &info);
+    if (info != 0) {
+        std::fprintf(stderr,
+                     "[linear_regression_basis] dgesvd workspace query "
+                     "failed, info=%d\n", info);
+        return false;
+    }
+    lwork = (int)wkopt;
+    std::vector<double> work((size_t)lwork);
+    dgesvd_(&jobu, &jobvt, &M, &N, A.data(), &lda,
+            S.data(), U.data(), &ldu, VT.data(), &ldvt,
+            work.data(), &lwork, &info);
+    if (info != 0) {
+        std::fprintf(stderr,
+                     "[linear_regression_basis] dgesvd failed, info=%d\n", info);
+        return false;
+    }
+
+    // Порог отсечения сингулярных чисел.
+    // Всё, что меньше  max(M,N)·eps·σ_max, для double неотличимо от нуля,
+    // и псевдообращение должно давать 0, а не 1/σ.
+    const double eps  = std::numeric_limits<double>::epsilon();
+    const double smax = (minMN > 0) ? S[0] : 0.0;
+    const double rcond = smax * (double)std::max(M, N) * eps;
+
+    // Диагностика — прямой ответ на "почему 4s не сходится".
+    int rank = 0;
+    for (int k = 0; k < minMN; ++k)
+        if (S[k] > rcond) ++rank;
+    std::printf("[linear_regression_basis] M=%d N=%d rank=%d of %d  "
+                "cond=%.3e  rcond=%.3e\n",
+                M, N, rank, minMN,
+                (S[minMN - 1] > 0.0 ? S[0] / S[minMN - 1] : 0.0),
+                rcond);
+
+    // w = U · Σ⁺ · Vᵀ · y
+    // 1) t = Vᵀ y; при этом t[k] /= S[k], если S[k] > rcond, иначе 0.
+    std::vector<double> t((size_t)minMN, 0.0);
+    for (int k = 0; k < minMN; ++k) {
+        double acc = 0.0;
+        for (int j = 0; j < N; ++j)
+            acc += VT[(size_t)k + (size_t)j * (size_t)minMN] * y[j];
+        t[(size_t)k] = (S[k] > rcond) ? acc / S[k] : 0.0;
+    }
+
+    // 2) w = U t
+    w_out.assign((size_t)M, 0.0);
+    for (int i = 0; i < M; ++i) {
+        double acc = 0.0;
+        for (int k = 0; k < minMN; ++k)
+            acc += U[(size_t)i + (size_t)k * (size_t)M] * t[(size_t)k];
+        w_out[(size_t)i] = acc;
+    }
+
+    return true;
+}
 // Вспомогательная функция: численный градиент (центральные разности)
 static void compute_gradient(std::function<double(std::vector<double>&, void*)>& f,
                              const std::vector<double>& x,
