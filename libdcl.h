@@ -322,7 +322,7 @@ bool find_minimum_descent(std::function<double(std::vector<double> &x,void *user
 bool find_minimum_lbfgs(std::function<double(std::vector<double> &x,void *user_data)> f, const std::vector<double> &x_init, std::vector<double> &x_out, void *user_data, double lambda_init=0.01, double epsilon=1e-10, int max_iter=10000, int m=10);
 //bool find_minimum_lbfgs(std::function<double(std::vector<double>&, void*)> f, const std::vector<double>& x_init, std::vector<double>& x_out, void* user_data, double epsilon = 1e-12, int max_iter =10000, int m = 5);
 bool find_minimum_1d(double(*f) (double &, void *), const double &x_init, double &x_out, void *user_data, double epsilon, int max_iter);
-bool linear_regression_basis(std::function<std::vector<double>(std::vector<double>&,void *)>f_basis,std::vector<double> &y,std::vector<std::vector<double>>&x_n,std::vector<double>&w_out,void *user_data);
+bool linear_regression_basis(std::function<std::vector<double>(std::vector<double>&,void *)>f_basis, std::vector<double> &y, std::vector<std::vector<double>>&x_n, std::vector<double>&w_out, void *user_data, double lambda = 0.0);
 unsigned int get_num_threads();
 double det(int N, double *a);
 double_complex_t zdet(int N, double_complex_t *m);

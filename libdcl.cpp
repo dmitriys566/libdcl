@@ -3819,7 +3819,7 @@ bool linear_regression_basis(std::function<std::vector<double>(std::vector<doubl
                              std::vector<double> &y,
                              std::vector<std::vector<double>>&x_n,
                              std::vector<double>&w_out,
-                             void *user_data)
+                             void *user_data, double lambda)
 {
     assert(x_n.size() > 0);
     assert(x_n[0].size() > 0);
@@ -3903,7 +3903,7 @@ bool linear_regression_basis(std::function<std::vector<double>(std::vector<doubl
         double acc = 0.0;
         for (int j = 0; j < N; ++j)
             acc += VT[(size_t)k + (size_t)j * (size_t)minMN] * y[j];
-        t[(size_t)k] = (S[k] > rcond) ? acc / S[k] : 0.0;
+        t[(size_t)k] = (S[k] > rcond) ? acc*S[k] / (S[k]*S[k]+lambda) : 0.0;//Добавили регуляризацию.
     }
 
     // 2) w = U t
