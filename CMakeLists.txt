@@ -45,10 +45,10 @@ add_subdirectory(cubature)
 
 add_library(dcl libamos.h libamos.cpp libeispack.cpp libeispack.h libdcl.cpp libdcl.h)
 if (MKL_FOUND)
-    target_link_libraries(dcl Threads::Threads Eigen3::Eigen gfortran m ${MKL_LIBRARIES} cubature PkgConfig::FFTW3)
+    target_link_libraries(dcl Threads::Threads Eigen3::Eigen gfortran m ${MKL_LIBRARIES} cubature FFTW3::fftw3)
 else()
     add_subdirectory(openblas)
-    target_link_libraries(dcl Threads::Threads Eigen3::Eigen gfortran m openblas lapack quadmath cubature PkgConfig::FFTW3)
+    target_link_libraries(dcl Threads::Threads Eigen3::Eigen gfortran m openblas lapack quadmath cubature FFTW3::fftw3)
 endif()
 target_include_directories(dcl
     PUBLIC
@@ -57,4 +57,4 @@ target_include_directories(dcl
 )
 add_executable(test test.cpp)
 
-target_link_libraries(test dcl Threads::Threads Eigen3::Eigen quadmath PkgConfig::FFTW3)
+target_link_libraries(test dcl Threads::Threads Eigen3::Eigen quadmath FFTW3::fftw3)

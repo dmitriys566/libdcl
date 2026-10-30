@@ -4,3 +4,6 @@
 [submodule "cubature"]
 	path = cubature
 	url = https://github.com/stevengj/cubature.git
+[submodule "fftw3"]
+	path = fftw3
+	url = https://github.com/FFTW/fftw3.git
