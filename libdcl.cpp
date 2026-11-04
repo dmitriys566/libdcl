@@ -2651,6 +2651,26 @@ double sk(int l,double x){
     return sqrt(pi/(2*x))*dbesselk(l+0.5,x);
 }
 
+double to_sjz(double z,void *sd)
+{
+    int l;
+    l= *((int *)sd);
+    return sj(l,z);
+}
+
+double SphericalBeselJZeros(int n,int l){
+    double a_,b_,root;
+    int nf;
+    a_=0.0;
+    b_=4*pi*(n+1)+4*l;
+    root = FindNZero(to_sjz,a_,b_,(void *)&l,1.0,n,&nf);
+    if(nf)
+    {
+        return NaN;
+    }
+    return root;
+}
+
 
 //Add new code
 double Pochgammer(int n,double alpha){
