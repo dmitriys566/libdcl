@@ -298,6 +298,7 @@ double si(int l,double x);
 double sk(int l,double x);
 double AiryAi(double x,int derivative);
 double AiryBi(double x,int derivative);
+double SphericalBeselJZeros(int n,int l);
 double Pochgammer(int n,double alpha);
 double_complex_t ZPochgammer(int n,double_complex_t alpha);
 double Hypergeometric1F1(double a,double c,double z);
