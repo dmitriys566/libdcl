@@ -2658,19 +2658,85 @@ double to_sjz(double z,void *sd)
     return sj(l,z);
 }
 
-double SphericalBeselJZeros(int n,int l){
+/*double SphericalBeselJZeros(int n,int l){
     double a_,b_,root;
     int nf;
     a_=0.0;
     b_=4*pi*(n+1)+4*l;
-    root = FindNZero(to_sjz,a_,b_,(void *)&l,1.0,n,&nf);
+    root = FindNZero(to_sjz,a_,b_,(void *)&l,0.5,n,&nf);
     if(nf)
     {
         return NaN;
     }
     return root;
-}
+}*/
 
+double SphericalBeselJZeros(int n, int l) {
+    if (n < 1) {
+        fprintf(stderr, "SphericalBeselJZeros: n must be >= 1, got n=%d\n", n);
+        return NaN;
+    }
+    if (l < 0) {
+        fprintf(stderr, "SphericalBeselJZeros: l must be >= 0, got l=%d\n", l);
+        return NaN;
+    }
+
+    // Верхняя граница по Мак-Магону: x_{n,l} ~ (n + l/2)π + поправки.
+    // Берём с запасом +10, чтобы точно перекрыть последний нуль.
+    double x_max = (n + 0.5 * l + 1.0) * pi + 10.0;
+    if (x_max < 10.0) x_max = 10.0;
+
+    // Стартовая точка: за пределами underflow-области, но до первого нуля.
+    // Для l=0:  x_start = 1e-3 (j_0(0)=1)
+    // Для l>0:  x_start = l + 1 (уже представимо, но ещё положительно)
+    double x_start = (l == 0) ? 1e-3 : (static_cast<double>(l) + 1.0);
+    if (x_start >= x_max) x_start = 1e-3;
+
+    // Шаг меньше половины периода нулей (≈ π) — гарантирует один нуль на брекет.
+    const double step = pi / 3.0;
+
+    // Отслеживаем ЗНАК последнего ненулевого значения и его позицию.
+    // Это устраняет ложный счёт при underflow и потерю нулей на сеточных точках.
+    double f0 = sj(l, x_start);
+    if (!std::isfinite(f0)) {
+        fprintf(stderr, "SphericalBeselJZeros: sj(%d, %g) non-finite\n", l, x_start);
+        return NaN;
+    }
+    int last_sign = (f0 > 0.0) ? 1 : ((f0 < 0.0) ? -1 : 1);
+    double x_prev_nz = x_start;
+    int count = 0;
+
+    for (double x = x_start + step; x <= x_max; x += step) {
+        double f = sj(l, x);
+        if (!std::isfinite(f)) continue;
+
+        // Пропускаем точки, слишком близкие к нулю (в т.ч. underflow):
+        // они не меняют знаковую информацию, следующий ненулевой шаг
+        // всё равно даст противоположный знак и корректный брекет.
+        double tol = 1e-14 * (1.0 + std::fabs(x));
+        if (std::fabs(f) < tol) continue;
+
+        int curr_sign = (f > 0.0) ? 1 : -1;
+        if (curr_sign != last_sign) {
+            // Смена знака между x_prev_nz и x → ровно один нуль
+            count++;
+            if (count == n) {
+                int errcode = 0;
+                double root = FindZero(to_sjz, x_prev_nz, x, (void*)&l, &errcode);
+                if (!errcode && std::isfinite(root)) return root;
+                return 0.5 * (x_prev_nz + x);
+            }
+        }
+        last_sign = curr_sign;
+        x_prev_nz = x;
+    }
+
+    fprintf(stderr,
+            "SphericalBeselJZeros: failed n=%d of j_%d "
+            "(counted=%d, x_max=%g)\n",
+            n, l, count, x_max);
+    return NaN;
+}
 
 //Add new code
 double Pochgammer(int n,double alpha){
