@@ -1512,36 +1512,42 @@ double LaguerreL(int n,int m,double x){
     return ((2*(n-1)+m+1-x)*(LaguerreL(n-1,m,x))-(n-1+m)*LaguerreL(n-2,m,x))/(n);
 }
 
-long double LaguerreLa(int n,long double a,double x){
-    if(n<0){
-        return 0;
+long double LaguerreLa(int n, long double a, double x) {
+    if (n < 0) {
+        return 0.0L;
     }
-    if(n==0){
-        return 1;
+    if (n == 0) {
+        return 1.0L;
     }
-    if(n==1){
-        return a+1-x;
+
+    long double xl = static_cast<long double>(x);
+
+    long double L0 = 1.0L;                 // L_0
+    long double L1 = a + 1.0L - xl;        // L_1
+
+    if (n == 1) {
+        return L1;
     }
-    return ((2*(n-1)+a+1-x)*(LaguerreLa(n-1,a,x))-(n-1+a)*LaguerreL(n-2,a,x))/(n);
+
+    long double Lnm2 = L0; // L_{k-2}
+    long double Lnm1 = L1; // L_{k-1}
+
+    for (int k = 2; k <= n; ++k) {
+        long double Lk =
+            ((2.0L * k - 1.0L + a - xl) * Lnm1
+             - (k - 1.0L + a) * Lnm2)
+            / static_cast<long double>(k);
+
+        Lnm2 = Lnm1;
+        Lnm1 = Lk;
+    }
+
+    return Lnm1;
 }
 
 
 //Input: a[m,n];b[n,k]
 //Output: r[m,k]
-/*void MatrixMatrixMultiply(double *r,double *a,double *b,int m,int n,int k){
-    int i,j,cnt;
-    double sum;
-    for(i=0;i<m;i++){
-        for(j=0;j<k;j++){
-            sum=0;
-            for(cnt=0;cnt<n;cnt++){
-                sum+=a[i*n+cnt]*b[cnt*k+j];
-            }
-            r[i*k+j]=sum;
-        }
-    }
-    return;
-}*/
 void MatrixMatrixMultiply(double *r, double *a, double *b, int m, int n, int k)
 {
     // Fortran BLAS: column-major. Row-major A (m×n) ≡ A^T (n×m) in column-major.
@@ -4446,18 +4452,6 @@ double Hypergeometric2F1(double a,double b,double c,double z)
     return rv;
 }
 
-void fourier_transform_1d(std::vector<double>&in,std::vector<double_complex_t> &out)
-{
-    size_t N = in.size();
-    std::vector<fftw_complex> res(N);
-    out.resize(N);
-    fftw_plan plan = fftw_plan_dft_r2c_1d(in.size(), in.data(), res.data(), FFTW_ESTIMATE);
-    fftw_execute(plan);
-    for(int i=0;i<res.size();i++)
-    {
-        out[i] = res[i][0]+I*res[i][1];
-    }
-}
 
 /**
  * @brief idx2offset
@@ -4500,6 +4494,19 @@ std::vector<int> offset2idx(std::vector<int>&ns,size_t offset)
         throw std::out_of_range("offset out of range");
     return idx;
 }
+#if defined(USE_FFTW3)
+void fourier_transform_1d(std::vector<double>&in,std::vector<double_complex_t> &out)
+{
+    size_t N = in.size();
+    std::vector<fftw_complex> res(N);
+    out.resize(N);
+    fftw_plan plan = fftw_plan_dft_r2c_1d(in.size(), in.data(), res.data(), FFTW_ESTIMATE);
+    fftw_execute(plan);
+    for(int i=0;i<res.size();i++)
+    {
+        out[i] = res[i][0]+I*res[i][1];
+    }
+}
 
 void fourier_transform(std::vector<double>&in,std::vector<double_complex_t>&out, std::vector<int> &ns)
 {
@@ -4516,3 +4523,4 @@ void fourier_transform(std::vector<double>&in,std::vector<double_complex_t>&out,
         out[i] = res[i][0]+I*res[i][1];
     }
 }
+#endif

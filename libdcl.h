@@ -6,7 +6,9 @@
 #include <vector>
 #include <stdexcept>
 #include <cmath>
+#if defined(USE_FFTW3)
 #include <fftw3.h>
+#endif
 #include <ios>
 #include <string>
 #include <array>
@@ -330,8 +332,10 @@ double_complex_t zdet(int N, double_complex_t *m);
 void EigenSystemComplex(std::vector<std::vector<complex_t>> &a,std::vector<complex_t> &w,std::vector<std::vector<complex_t>> &zc,bool eigenvectors);
 double Hypergeometric2F1(double a,double b,double c,double z);
 void dump_v(std::string &filename,std::vector<double> v);
+#if defined(USE_FFTW3)
 void fourier_transform_1d(std::vector<double>&in,std::vector<double_complex_t> &out);
 void fourier_transform(std::vector<double>&in,std::vector<double_complex_t>&out, std::vector<int> &ns);
+#endif
 //Auxilary functions
 size_t idx2offset(std::vector<int> &ns,std::vector<int> &idx);
 std::vector<int> offset2idx(std::vector<int>&ns,size_t offset);
